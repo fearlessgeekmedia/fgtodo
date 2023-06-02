@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+# Define variables
+TODO_FILE="$HOME/.config/fgtodo"
+
+# Create todo file if it doesn't exist
+touch "$TODO_FILE"
+
+# Define functions
+function list_items {
+    cat "$TODO_FILE"
+}
+
+function add_item {
+    local new_item=$(gum input --placeholder "Enter new task: ")
+    if [[ -n "$new_item" ]]; then
+        echo "$new_item" >> "$TODO_FILE"
+    fi
+}
+
+function delete_item {
+    local selected_item=$(list_items | gum choose)
+    if [[ -n "$selected_item" ]]; then
+        sed -i "/^${selected_item}$/d" "$TODO_FILE"
+    fi
+}
+
+function edit_item {
+    local selected_item=$(list_items | gum choose)
+    if [[ -n "$selected_item" ]]; then
+        local new_item=$(gum input --placeholder "$selected_item")
+        if [[ -n "$new_item" ]]; then
+            sed -i "s@${selected_item}@${new_item}@" "$TODO_FILE"
+        fi
+    fi
+}
+
+# Check if no flags/options were provided
+if [[ $# -eq 0 ]]; then
+    PS3="Choose an action: "
+    selected_action=$(gum choose "Add" "Edit" "List" "Delete" "Quit")
+    case "$selected_action" in
+        "Add")
+            add_item
+            ;;
+        "Edit")
+            edit_item
+            ;;
+        "List")
+            list_items
+            ;;
+        "Delete")
+            delete_item
+            ;;
+        "Quit")
+            exit 0
+            ;;
+        *)
+            echo "Invalid option"
+            exit 1
+            ;;
+    esac
+else
+    # Parse command line arguments
+    case "$1" in
+        -l|--list)
+            list_items
+            ;;
+        -a|--add)
+            shift
+            add_item "$*"
+            ;;
+        -d|--delete)
+            delete_item "$2"
+            ;;
+        -e|--edit)
+            edit_item
+            ;;
+        *)
+            echo "Usage: $0 [-l|--list] [-a|--add] [-d|--delete] [-e|--edit]"
+            exit 1
+    esac
+fi
