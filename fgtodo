@@ -8,7 +8,7 @@ touch "$TODO_FILE"
 
 # Define functions
 function list_items {
-    cat "$TODO_FILE"
+    cat "$TODO_FILE" | ts - | tr -d ''
 }
 
 function add_item {
